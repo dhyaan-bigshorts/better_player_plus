@@ -1,8 +1,9 @@
-package uz.shs.better_player_plus
+@UnstableApi package uz.shs.better_player_plus
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.cache.CacheWriter

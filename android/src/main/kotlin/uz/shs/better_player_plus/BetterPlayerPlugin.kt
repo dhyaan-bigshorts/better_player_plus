@@ -1,4 +1,4 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+@UnstableApi // Copyright 2017 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 package uz.shs.better_player_plus
@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import android.util.LongSparseArray
 import android.util.Rational
+import androidx.media3.common.util.UnstableApi
 import uz.shs.better_player_plus.BetterPlayerCache.releaseCache
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
