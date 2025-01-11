@@ -1,9 +1,9 @@
 @file:UnstableApi
+
 package uz.shs.better_player_plus
 // Copyright 2017 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-package uz.shs.better_player_plus
 
 import android.app.Activity
 import android.app.PictureInPictureParams
@@ -16,24 +16,22 @@ import android.util.Log
 import android.util.LongSparseArray
 import android.util.Rational
 import androidx.media3.common.util.UnstableApi
-import uz.shs.better_player_plus.BetterPlayerCache.releaseCache
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
 import io.flutter.embedding.engine.loader.FlutterLoader
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.EventChannel
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.view.TextureRegistry
 import java.lang.Exception
 import java.util.HashMap
+import uz.shs.better_player_plus.BetterPlayerCache.releaseCache
 
-/**
- * Android platform implementation of the VideoPlayerPlugin.
- */
+/** Android platform implementation of the VideoPlayerPlugin. */
 class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private val videoPlayers = LongSparseArray<BetterPlayer>()
     private val dataSources = LongSparseArray<Map<String, Any?>>()
@@ -45,27 +43,24 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private var pipRunnable: Runnable? = null
     override fun onAttachedToEngine(binding: FlutterPluginBinding) {
         val loader = FlutterLoader()
-        flutterState = FlutterState(
-            binding.applicationContext,
-            binding.binaryMessenger, object : KeyForAssetFn {
-                override fun get(asset: String?): String {
-                    return loader.getLookupKeyForAsset(
-                        asset!!
-                    )
-                }
-
-            }, object : KeyForAssetAndPackageName {
-                override fun get(asset: String?, packageName: String?): String {
-                    return loader.getLookupKeyForAsset(
-                        asset!!, packageName!!
-                    )
-                }
-            },
-            binding.textureRegistry
-        )
+        flutterState =
+                FlutterState(
+                        binding.applicationContext,
+                        binding.binaryMessenger,
+                        object : KeyForAssetFn {
+                            override fun get(asset: String?): String {
+                                return loader.getLookupKeyForAsset(asset!!)
+                            }
+                        },
+                        object : KeyForAssetAndPackageName {
+                            override fun get(asset: String?, packageName: String?): String {
+                                return loader.getLookupKeyForAsset(asset!!, packageName!!)
+                            }
+                        },
+                        binding.textureRegistry
+                )
         flutterState?.startListening(this)
     }
-
 
     override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
         if (flutterState == null) {
@@ -104,47 +99,51 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             INIT_METHOD -> disposeAllPlayers()
             CREATE_METHOD -> {
                 val handle = flutterState!!.textureRegistry!!.createSurfaceTexture()
-                val eventChannel = EventChannel(
-                    flutterState?.binaryMessenger, EVENTS_CHANNEL + handle.id()
-                )
+                val eventChannel =
+                        EventChannel(flutterState?.binaryMessenger, EVENTS_CHANNEL + handle.id())
                 var customDefaultLoadControl: CustomDefaultLoadControl? = null
-                if (call.hasArgument(MIN_BUFFER_MS) && call.hasArgument(MAX_BUFFER_MS) &&
-                    call.hasArgument(BUFFER_FOR_PLAYBACK_MS) &&
-                    call.hasArgument(BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+                if (call.hasArgument(MIN_BUFFER_MS) &&
+                                call.hasArgument(MAX_BUFFER_MS) &&
+                                call.hasArgument(BUFFER_FOR_PLAYBACK_MS) &&
+                                call.hasArgument(BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
                 ) {
-                    customDefaultLoadControl = CustomDefaultLoadControl(
-                        call.argument(MIN_BUFFER_MS),
-                        call.argument(MAX_BUFFER_MS),
-                        call.argument(BUFFER_FOR_PLAYBACK_MS),
-                        call.argument(BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
-                    )
+                    customDefaultLoadControl =
+                            CustomDefaultLoadControl(
+                                    call.argument(MIN_BUFFER_MS),
+                                    call.argument(MAX_BUFFER_MS),
+                                    call.argument(BUFFER_FOR_PLAYBACK_MS),
+                                    call.argument(BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+                            )
                 }
-                val player = BetterPlayer(
-                    flutterState?.applicationContext!!, eventChannel, handle,
-                    customDefaultLoadControl, result
-                )
+                val player =
+                        BetterPlayer(
+                                flutterState?.applicationContext!!,
+                                eventChannel,
+                                handle,
+                                customDefaultLoadControl,
+                                result
+                        )
                 videoPlayers.put(handle.id(), player)
             }
-
             PRE_CACHE_METHOD -> preCache(call, result)
             STOP_PRE_CACHE_METHOD -> stopPreCache(call, result)
             CLEAR_CACHE_METHOD -> clearCache(result)
             else -> {
                 if (call.argument<Any>(TEXTURE_ID_PARAMETER) == null) {
-//                    result.error(
-//                        "Unknown textureId",
-//                        "No video player associated with texture id",
-//                        null
-//                    )
+                    //                    result.error(
+                    //                        "Unknown textureId",
+                    //                        "No video player associated with texture id",
+                    //                        null
+                    //                    )
                     return
                 }
                 val textureId = ((call.argument<Any>(TEXTURE_ID_PARAMETER) as Int?) ?: 0).toLong()
                 val player = videoPlayers[textureId]
                 if (player == null) {
                     result.error(
-                        "Unknown textureId",
-                        "No video player associated with texture id $textureId",
-                        null
+                            "Unknown textureId",
+                            "No video player associated with texture id $textureId",
+                            null
                     )
                     return
                 }
@@ -154,77 +153,63 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     }
 
     private fun onMethodCall(
-        call: MethodCall,
-        result: MethodChannel.Result,
-        textureId: Long,
-        player: BetterPlayer
+            call: MethodCall,
+            result: MethodChannel.Result,
+            textureId: Long,
+            player: BetterPlayer
     ) {
         when (call.method) {
             SET_DATA_SOURCE_METHOD -> {
                 setDataSource(call, result, player)
             }
-
             SET_LOOPING_METHOD -> {
                 player.setLooping(call.argument(LOOPING_PARAMETER)!!)
                 result.success(null)
             }
-
             SET_VOLUME_METHOD -> {
                 player.setVolume(call.argument(VOLUME_PARAMETER)!!)
                 result.success(null)
             }
-
             PLAY_METHOD -> {
                 setupNotification(player)
                 player.play()
                 result.success(null)
             }
-
             PAUSE_METHOD -> {
                 player.pause()
                 result.success(null)
             }
-
             SEEK_TO_METHOD -> {
                 val location = (call.argument<Any>(LOCATION_PARAMETER) as Number?)!!.toInt()
                 player.seekTo(location)
                 result.success(null)
             }
-
             POSITION_METHOD -> {
                 result.success(player.position)
                 player.sendBufferingUpdate(false)
             }
-
             ABSOLUTE_POSITION_METHOD -> result.success(player.absolutePosition)
             SET_SPEED_METHOD -> {
                 player.setSpeed(call.argument(SPEED_PARAMETER)!!)
                 result.success(null)
             }
-
             SET_TRACK_PARAMETERS_METHOD -> {
                 player.setTrackParameters(
-                    call.argument(WIDTH_PARAMETER)!!,
-                    call.argument(HEIGHT_PARAMETER)!!,
-                    call.argument(BITRATE_PARAMETER)!!
+                        call.argument(WIDTH_PARAMETER)!!,
+                        call.argument(HEIGHT_PARAMETER)!!,
+                        call.argument(BITRATE_PARAMETER)!!
                 )
                 result.success(null)
             }
-
             ENABLE_PICTURE_IN_PICTURE_METHOD -> {
                 enablePictureInPicture(player)
                 result.success(null)
             }
-
             DISABLE_PICTURE_IN_PICTURE_METHOD -> {
                 disablePictureInPicture(player)
                 result.success(null)
             }
-
-            IS_PICTURE_IN_PICTURE_SUPPORTED_METHOD -> result.success(
-                isPictureInPictureSupported()
-            )
-
+            IS_PICTURE_IN_PICTURE_SUPPORTED_METHOD -> result.success(isPictureInPictureSupported())
             SET_AUDIO_TRACK_METHOD -> {
                 val name = call.argument<String?>(NAME_PARAMETER)
                 val index = call.argument<Int?>(INDEX_PARAMETER)
@@ -233,29 +218,24 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 }
                 result.success(null)
             }
-
             SET_MIX_WITH_OTHERS_METHOD -> {
-                val mixWitOthers = call.argument<Boolean?>(
-                    MIX_WITH_OTHERS_PARAMETER
-                )
+                val mixWitOthers = call.argument<Boolean?>(MIX_WITH_OTHERS_PARAMETER)
                 if (mixWitOthers != null) {
                     player.setMixWithOthers(mixWitOthers)
                 }
             }
-
             DISPOSE_METHOD -> {
                 dispose(player, textureId)
                 result.success(null)
             }
-
             else -> result.notImplemented()
         }
     }
 
     private fun setDataSource(
-        call: MethodCall,
-        result: MethodChannel.Result,
-        player: BetterPlayer
+            call: MethodCall,
+            result: MethodChannel.Result,
+            player: BetterPlayer
     ) {
         val dataSource = call.argument<Map<String, Any?>>(DATA_SOURCE_PARAMETER)!!
         dataSources.put(getTextureId(player)!!, dataSource)
@@ -264,35 +244,34 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         val overriddenDuration: Number = getParameter(dataSource, OVERRIDDEN_DURATION_PARAMETER, 0)
         if (dataSource[ASSET_PARAMETER] != null) {
             val asset = getParameter(dataSource, ASSET_PARAMETER, "")
-            val assetLookupKey: String = if (dataSource[PACKAGE_PARAMETER] != null) {
-                val packageParameter = getParameter(
-                    dataSource,
-                    PACKAGE_PARAMETER,
-                    ""
-                )
-                flutterState!!.keyForAssetAndPackageName[asset, packageParameter]
-            } else {
-                flutterState!!.keyForAsset[asset]
-            }
+            val assetLookupKey: String =
+                    if (dataSource[PACKAGE_PARAMETER] != null) {
+                        val packageParameter = getParameter(dataSource, PACKAGE_PARAMETER, "")
+                        flutterState!!.keyForAssetAndPackageName[asset, packageParameter]
+                    } else {
+                        flutterState!!.keyForAsset[asset]
+                    }
             player.setDataSource(
-                flutterState?.applicationContext!!,
-                key,
-                "asset:///$assetLookupKey",
-                null,
-                result,
-                headers,
-                false,
-                0L,
-                0L,
-                overriddenDuration.toLong(),
-                null,
-                null, null, null
+                    flutterState?.applicationContext!!,
+                    key,
+                    "asset:///$assetLookupKey",
+                    null,
+                    result,
+                    headers,
+                    false,
+                    0L,
+                    0L,
+                    overriddenDuration.toLong(),
+                    null,
+                    null,
+                    null,
+                    null
             )
         } else {
             val useCache = getParameter(dataSource, USE_CACHE_PARAMETER, false)
             val maxCacheSizeNumber: Number = getParameter(dataSource, MAX_CACHE_SIZE_PARAMETER, 0)
             val maxCacheFileSizeNumber: Number =
-                getParameter(dataSource, MAX_CACHE_FILE_SIZE_PARAMETER, 0)
+                    getParameter(dataSource, MAX_CACHE_FILE_SIZE_PARAMETER, 0)
             val maxCacheSize = maxCacheSizeNumber.toLong()
             val maxCacheFileSize = maxCacheFileSizeNumber.toLong()
             val uri = getParameter(dataSource, URI_PARAMETER, "")
@@ -301,22 +280,22 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             val licenseUrl = getParameter<String?>(dataSource, LICENSE_URL_PARAMETER, null)
             val clearKey = getParameter<String?>(dataSource, DRM_CLEARKEY_PARAMETER, null)
             val drmHeaders: Map<String, String> =
-                getParameter(dataSource, DRM_HEADERS_PARAMETER, HashMap())
+                    getParameter(dataSource, DRM_HEADERS_PARAMETER, HashMap())
             player.setDataSource(
-                flutterState!!.applicationContext,
-                key,
-                uri,
-                formatHint,
-                result,
-                headers,
-                useCache,
-                maxCacheSize,
-                maxCacheFileSize,
-                overriddenDuration.toLong(),
-                licenseUrl,
-                drmHeaders,
-                cacheKey,
-                clearKey
+                    flutterState!!.applicationContext,
+                    key,
+                    uri,
+                    formatHint,
+                    result,
+                    headers,
+                    useCache,
+                    maxCacheSize,
+                    maxCacheFileSize,
+                    overriddenDuration.toLong(),
+                    licenseUrl,
+                    drmHeaders,
+                    cacheKey,
+                    clearKey
             )
         }
     }
@@ -324,34 +303,36 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     /**
      * Start pre cache of video.
      *
-     * @param call   - invoked method data
-     * @param result - result which should be updated
+     * @param call
+     * - invoked method data
+     * @param result
+     * - result which should be updated
      */
     private fun preCache(call: MethodCall, result: MethodChannel.Result) {
         val dataSource = call.argument<Map<String, Any?>>(DATA_SOURCE_PARAMETER)
         if (dataSource != null) {
             val maxCacheSizeNumber: Number =
-                getParameter(dataSource, MAX_CACHE_SIZE_PARAMETER, 100 * 1024 * 1024)
+                    getParameter(dataSource, MAX_CACHE_SIZE_PARAMETER, 100 * 1024 * 1024)
             val maxCacheFileSizeNumber: Number =
-                getParameter(dataSource, MAX_CACHE_FILE_SIZE_PARAMETER, 10 * 1024 * 1024)
+                    getParameter(dataSource, MAX_CACHE_FILE_SIZE_PARAMETER, 10 * 1024 * 1024)
             val maxCacheSize = maxCacheSizeNumber.toLong()
             val maxCacheFileSize = maxCacheFileSizeNumber.toLong()
             val preCacheSizeNumber: Number =
-                getParameter(dataSource, PRE_CACHE_SIZE_PARAMETER, 3 * 1024 * 1024)
+                    getParameter(dataSource, PRE_CACHE_SIZE_PARAMETER, 3 * 1024 * 1024)
             val preCacheSize = preCacheSizeNumber.toLong()
             val uri = getParameter(dataSource, URI_PARAMETER, "")
             val cacheKey = getParameter<String?>(dataSource, CACHE_KEY_PARAMETER, null)
             val headers: Map<String, String> =
-                getParameter(dataSource, HEADERS_PARAMETER, HashMap())
+                    getParameter(dataSource, HEADERS_PARAMETER, HashMap())
             BetterPlayer.preCache(
-                flutterState?.applicationContext,
-                uri,
-                preCacheSize,
-                maxCacheSize,
-                maxCacheFileSize,
-                headers,
-                cacheKey,
-                result
+                    flutterState?.applicationContext,
+                    uri,
+                    preCacheSize,
+                    maxCacheSize,
+                    maxCacheFileSize,
+                    headers,
+                    cacheKey,
+                    result
             )
         }
     }
@@ -359,8 +340,10 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     /**
      * Stop pre cache video process (if exists).
      *
-     * @param call   - invoked method data
-     * @param result - result which should be updated
+     * @param call
+     * - invoked method data
+     * @param result
+     * - result which should be updated
      */
     private fun stopPreCache(call: MethodCall, result: MethodChannel.Result) {
         val url = call.argument<String>(URL_PARAMETER)
@@ -385,8 +368,12 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             val textureId = getTextureId(betterPlayer)
             if (textureId != null) {
                 val dataSource = dataSources[textureId]
-                //Don't setup notification for the same source.
-                if (textureId == currentNotificationTextureId && currentNotificationDataSource != null && dataSource != null && currentNotificationDataSource === dataSource) {
+                // Don't setup notification for the same source.
+                if (textureId == currentNotificationTextureId &&
+                                currentNotificationDataSource != null &&
+                                dataSource != null &&
+                                currentNotificationDataSource === dataSource
+                ) {
                     return
                 }
                 currentNotificationDataSource = dataSource
@@ -398,12 +385,20 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                     val author = getParameter(dataSource, AUTHOR_PARAMETER, "")
                     val imageUrl = getParameter(dataSource, IMAGE_URL_PARAMETER, "")
                     val notificationChannelName =
-                        getParameter<String?>(dataSource, NOTIFICATION_CHANNEL_NAME_PARAMETER, null)
+                            getParameter<String?>(
+                                    dataSource,
+                                    NOTIFICATION_CHANNEL_NAME_PARAMETER,
+                                    null
+                            )
                     val activityName =
-                        getParameter(dataSource, ACTIVITY_NAME_PARAMETER, "MainActivity")
+                            getParameter(dataSource, ACTIVITY_NAME_PARAMETER, "MainActivity")
                     betterPlayer.setupPlayerNotification(
-                        flutterState?.applicationContext!!,
-                        title, author, imageUrl, notificationChannelName, activityName
+                            flutterState?.applicationContext!!,
+                            title,
+                            author,
+                            imageUrl,
+                            notificationChannelName,
+                            activityName
                     )
                 }
             }
@@ -429,18 +424,20 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         return defaultValue
     }
 
-
     private fun isPictureInPictureSupported(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && activity != null && activity!!.packageManager
-            .hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                activity != null &&
+                activity!!.packageManager.hasSystemFeature(
+                        PackageManager.FEATURE_PICTURE_IN_PICTURE
+                )
     }
 
     private fun enablePictureInPicture(player: BetterPlayer) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             player.setupMediaSession(flutterState!!.applicationContext)
-            activity!!.enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(
-                Rational(16, 9)
-            ).build())
+            activity!!.enterPictureInPictureMode(
+                    PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
+            )
             startPictureInPictureListenerTimer(player)
             player.onPictureInPictureStatusChanged(true)
         }
@@ -493,11 +490,11 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     }
 
     private class FlutterState(
-        val applicationContext: Context,
-        val binaryMessenger: BinaryMessenger,
-        val keyForAsset: KeyForAssetFn,
-        val keyForAssetAndPackageName: KeyForAssetAndPackageName,
-        val textureRegistry: TextureRegistry?
+            val applicationContext: Context,
+            val binaryMessenger: BinaryMessenger,
+            val keyForAsset: KeyForAssetFn,
+            val keyForAssetAndPackageName: KeyForAssetAndPackageName,
+            val textureRegistry: TextureRegistry?
     ) {
         private val methodChannel: MethodChannel = MethodChannel(binaryMessenger, CHANNEL)
 
@@ -508,7 +505,6 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         fun stopListening() {
             methodChannel.setMethodCallHandler(null)
         }
-
     }
 
     companion object {
