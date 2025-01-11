@@ -1,4 +1,6 @@
-@UnstableApi package uz.shs.better_player_plus
+@file:OptIn(UnstableApi::class)
+
+package uz.shs.better_player_plus
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,27 +9,25 @@ import android.net.Uri
 import android.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.work.Data
-import androidx.work.WorkerParameters
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
 
-class ImageWorker(
-    context: Context,
-    params: WorkerParameters
-) : Worker(context, params) {
+class ImageWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         return try {
-            val imageUrl = inputData.getString(BetterPlayerPlugin.URL_PARAMETER)
-                ?: return Result.failure()
-            val bitmap: Bitmap? = if (DataSourceUtils.isHTTP(Uri.parse(imageUrl))) {
-                getBitmapFromExternalURL(imageUrl)
-            } else {
-                getBitmapFromInternalURL(imageUrl)
-            }
+            val imageUrl =
+                    inputData.getString(BetterPlayerPlugin.URL_PARAMETER) ?: return Result.failure()
+            val bitmap: Bitmap? =
+                    if (DataSourceUtils.isHTTP(Uri.parse(imageUrl))) {
+                        getBitmapFromExternalURL(imageUrl)
+                    } else {
+                        getBitmapFromInternalURL(imageUrl)
+                    }
             val fileName = imageUrl.hashCode().toString() + IMAGE_EXTENSION
             val filePath = applicationContext.cacheDir.absolutePath + fileName
             if (bitmap == null) {
@@ -36,7 +36,9 @@ class ImageWorker(
             val out = FileOutputStream(filePath)
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             val data =
-                Data.Builder().putString(BetterPlayerPlugin.FILE_PATH_PARAMETER, filePath).build()
+                    Data.Builder()
+                            .putString(BetterPlayerPlugin.FILE_PATH_PARAMETER, filePath)
+                            .build()
             Result.success(data)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -56,9 +58,7 @@ class ImageWorker(
             inputStream.close()
             connection = url.openConnection() as HttpURLConnection
             inputStream = connection.inputStream
-            options.inSampleSize = calculateBitmapInSampleSize(
-                options
-            )
+            options.inSampleSize = calculateBitmapInSampleSize(options)
             options.inJustDecodeBounds = false
             BitmapFactory.decodeStream(inputStream, null, options)
         } catch (exception: Exception) {
@@ -73,20 +73,17 @@ class ImageWorker(
         }
     }
 
-    private fun calculateBitmapInSampleSize(
-        options: BitmapFactory.Options
-    ): Int {
+    private fun calculateBitmapInSampleSize(options: BitmapFactory.Options): Int {
         val height = options.outHeight
         val width = options.outWidth
         var inSampleSize = 1
-        if (height > DEFAULT_NOTIFICATION_IMAGE_SIZE_PX
-            || width > DEFAULT_NOTIFICATION_IMAGE_SIZE_PX
+        if (height > DEFAULT_NOTIFICATION_IMAGE_SIZE_PX ||
+                        width > DEFAULT_NOTIFICATION_IMAGE_SIZE_PX
         ) {
             val halfHeight = height / 2
             val halfWidth = width / 2
-            while (halfHeight / inSampleSize >= DEFAULT_NOTIFICATION_IMAGE_SIZE_PX
-                && halfWidth / inSampleSize >= DEFAULT_NOTIFICATION_IMAGE_SIZE_PX
-            ) {
+            while (halfHeight / inSampleSize >= DEFAULT_NOTIFICATION_IMAGE_SIZE_PX &&
+                    halfWidth / inSampleSize >= DEFAULT_NOTIFICATION_IMAGE_SIZE_PX) {
                 inSampleSize *= 2
             }
         }
@@ -97,9 +94,7 @@ class ImageWorker(
         return try {
             val options = BitmapFactory.Options()
             options.inJustDecodeBounds = true
-            options.inSampleSize = calculateBitmapInSampleSize(
-                options
-            )
+            options.inSampleSize = calculateBitmapInSampleSize(options)
             options.inJustDecodeBounds = false
             BitmapFactory.decodeFile(src)
         } catch (exception: Exception) {

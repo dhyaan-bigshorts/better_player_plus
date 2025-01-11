@@ -1,4 +1,6 @@
-@UnstableApi package uz.shs.better_player_plus
+@file:OptIn(UnstableApi::class)
+
+package uz.shs.better_player_plus
 
 import android.content.Context
 import android.util.Log
@@ -10,17 +12,17 @@ import java.io.File
 import java.lang.Exception
 
 object BetterPlayerCache {
-    @Volatile
-    private var instance: SimpleCache? = null
+    @Volatile private var instance: SimpleCache? = null
     fun createCache(context: Context, cacheFileSize: Long): SimpleCache? {
         if (instance == null) {
             synchronized(BetterPlayerCache::class.java) {
                 if (instance == null) {
-                    instance = SimpleCache(
-                        File(context.cacheDir, "betterPlayerCache"),
-                        LeastRecentlyUsedCacheEvictor(cacheFileSize),
-                        ExoDatabaseProvider(context)
-                    )
+                    instance =
+                            SimpleCache(
+                                    File(context.cacheDir, "betterPlayerCache"),
+                                    LeastRecentlyUsedCacheEvictor(cacheFileSize),
+                                    ExoDatabaseProvider(context)
+                            )
                 }
             }
         }

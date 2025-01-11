@@ -1,4 +1,6 @@
-@UnstableApi package uz.shs.better_player_plus
+@file:OptIn(UnstableApi::class)
+
+package uz.shs.better_player_plus
 
 import android.content.Context
 import android.net.Uri
@@ -7,22 +9,20 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.cache.CacheWriter
-import uz.shs.better_player_plus.DataSourceUtils.isHTTP
-import uz.shs.better_player_plus.DataSourceUtils.getUserAgent
-import uz.shs.better_player_plus.DataSourceUtils.getDataSourceFactory
-import androidx.work.WorkerParameters
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import java.lang.Exception
 import java.util.*
+import uz.shs.better_player_plus.DataSourceUtils.getDataSourceFactory
+import uz.shs.better_player_plus.DataSourceUtils.getUserAgent
+import uz.shs.better_player_plus.DataSourceUtils.isHTTP
 
 /**
- * Cache worker which download part of video and save in cache for future usage. The cache job
- * will be executed in work manager.
+ * Cache worker which download part of video and save in cache for future usage. The cache job will
+ * be executed in work manager.
  */
-class CacheWorker(
-    private val context: Context,
-    params: WorkerParameters
-) : Worker(context, params) {
+class CacheWorker(private val context: Context, params: WorkerParameters) :
+        Worker(context, params) {
     private var cacheWriter: CacheWriter? = null
     private var lastCacheReportIndex = 0
     override fun doWork(): Result {
@@ -37,7 +37,8 @@ class CacheWorker(
             for (key in data.keyValueMap.keys) {
                 if (key.contains(BetterPlayerPlugin.HEADER_PARAMETER)) {
                     val keySplit =
-                        key.split(BetterPlayerPlugin.HEADER_PARAMETER.toRegex()).toTypedArray()[0]
+                            key.split(BetterPlayerPlugin.HEADER_PARAMETER.toRegex()).toTypedArray()[
+                                    0]
                     headers[keySplit] = Objects.requireNonNull(data.keyValueMap[key]) as String
                 }
             }
@@ -49,26 +50,31 @@ class CacheWorker(
                 if (!cacheKey.isNullOrEmpty()) {
                     dataSpec = dataSpec.buildUpon().setKey(cacheKey).build()
                 }
-                val cacheDataSourceFactory = CacheDataSourceFactory(
-                    context,
-                    maxCacheSize,
-                    maxCacheFileSize,
-                    dataSourceFactory
-                )
-                cacheWriter = CacheWriter(
-                    cacheDataSourceFactory.createDataSource(),
-                    dataSpec,
-                    null
-                ) { _: Long, bytesCached: Long, _: Long ->
-                    val completedData = (bytesCached * 100f / preCacheSize).toDouble()
-                    if (completedData >= lastCacheReportIndex * 10) {
-                        lastCacheReportIndex += 1
-                        Log.d(
-                            TAG,
-                            "Completed pre cache of " + url + ": " + completedData.toInt() + "%"
+                val cacheDataSourceFactory =
+                        CacheDataSourceFactory(
+                                context,
+                                maxCacheSize,
+                                maxCacheFileSize,
+                                dataSourceFactory
                         )
-                    }
-                }
+                cacheWriter =
+                        CacheWriter(cacheDataSourceFactory.createDataSource(), dataSpec, null) {
+                                _: Long,
+                                bytesCached: Long,
+                                _: Long ->
+                            val completedData = (bytesCached * 100f / preCacheSize).toDouble()
+                            if (completedData >= lastCacheReportIndex * 10) {
+                                lastCacheReportIndex += 1
+                                Log.d(
+                                        TAG,
+                                        "Completed pre cache of " +
+                                                url +
+                                                ": " +
+                                                completedData.toInt() +
+                                                "%"
+                                )
+                            }
+                        }
                 cacheWriter?.cache()
             } else {
                 Log.e(TAG, "Preloading only possible for remote data sources")
