@@ -1,6 +1,6 @@
-@file:OptIn(UnstableApi::class)
-
+@file:UnstableApi
 package uz.shs.better_player_plus
+
 
 import android.content.Context
 import android.util.Log

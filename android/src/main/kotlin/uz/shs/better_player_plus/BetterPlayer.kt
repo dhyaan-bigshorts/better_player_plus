@@ -1,6 +1,6 @@
-@file:OptIn(UnstableApi::class)
-
+@file:UnstableApi
 package uz.shs.better_player_plus
+
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel

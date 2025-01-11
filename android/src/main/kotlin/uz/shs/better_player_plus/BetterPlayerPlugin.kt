@@ -1,4 +1,4 @@
-@file:OptIn(UnstableApi::class)
+@file:UnstableApi
 package uz.shs.better_player_plus
 // Copyright 2017 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be

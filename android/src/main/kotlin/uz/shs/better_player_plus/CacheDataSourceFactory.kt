@@ -1,4 +1,3 @@
-@file:OptIn(UnstableApi::class)
 
 package uz.shs.better_player_plus
 

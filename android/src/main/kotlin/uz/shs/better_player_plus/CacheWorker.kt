@@ -1,6 +1,7 @@
-@file:OptIn(UnstableApi::class)
-
+@file:UnstableApi
 package uz.shs.better_player_plus
+
+
 
 import android.content.Context
 import android.net.Uri
@@ -25,7 +26,7 @@ class CacheWorker(private val context: Context, params: WorkerParameters) :
         Worker(context, params) {
     private var cacheWriter: CacheWriter? = null
     private var lastCacheReportIndex = 0
-    override fun doWork(): Result {
+    @UnstableApi override fun doWork(): Result {
         try {
             val data = inputData
             val url = data.getString(BetterPlayerPlugin.URL_PARAMETER)
